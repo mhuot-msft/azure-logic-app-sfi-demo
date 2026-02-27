@@ -38,7 +38,7 @@
             "refId": "A",
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
-              "query": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-intake\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize Total=count(), TimeGenerated=max(TimeGenerated)",
+              "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-intake\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize Total=count(), TimeGenerated=max(TimeGenerated)",
               "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
               "resultFormat": "table",
               "timeColumn": "TimeGenerated"
@@ -47,7 +47,7 @@
         ],
         "options": {
           "reduceOptions": {
-            "calcs": ["lastNotNull"]
+            "calcs": ["sum"]
           },
           "colorMode": "background",
           "graphMode": "none",
@@ -97,7 +97,7 @@
         ],
         "options": {
           "reduceOptions": {
-            "calcs": ["lastNotNull"]
+            "calcs": ["sum"]
           },
           "colorMode": "background",
           "graphMode": "none",
@@ -179,7 +179,7 @@
             "refId": "A",
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
-              "query": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-intake\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize ValidationErrors=countif(status_s == \"Failed\"), TimeGenerated=max(TimeGenerated)",
+              "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-intake\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize ValidationErrors=countif(status_s == \"Failed\"), TimeGenerated=max(TimeGenerated)",
               "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
               "resultFormat": "table",
               "timeColumn": "TimeGenerated"
@@ -228,7 +228,7 @@
             "refId": "Succeeded",
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
-              "query": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-intake\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize Succeeded=countif(status_s == \"Succeeded\"), Failed=countif(status_s == \"Failed\") by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+              "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-intake\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize Succeeded=countif(status_s == \"Succeeded\"), Failed=countif(status_s == \"Failed\") by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
               "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
               "resultFormat": "time_series",
               "timeColumn": "TimeGenerated"
@@ -273,7 +273,7 @@
             "refId": "A",
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
-              "query": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-router\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize Succeeded=countif(status_s == \"Succeeded\"), Failed=countif(status_s == \"Failed\") by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+              "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-router\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize Succeeded=countif(status_s == \"Succeeded\"), Failed=countif(status_s == \"Failed\") by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
               "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
               "resultFormat": "time_series",
               "timeColumn": "TimeGenerated"
@@ -490,7 +490,7 @@
             "refId": "A",
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
-              "query": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where Category == \"WorkflowRuntime\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| project Time=TimeGenerated, Workflow=resource_workflowName_s, Status=status_s, TrackingId=correlation_clientTrackingId_s\n| order by Time desc\n| take 15",
+              "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where Category == \"WorkflowRuntime\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| project Time=TimeGenerated, Workflow=resource_workflowName_s, Status=status_s, TrackingId=correlation_clientTrackingId_s\n| order by Time desc\n| take 15",
               "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
               "resultFormat": "table",
               "timeColumn": "Time"
