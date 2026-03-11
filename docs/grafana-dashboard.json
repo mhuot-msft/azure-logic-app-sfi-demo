@@ -257,7 +257,7 @@
         "options": {
           "reduceOptions": {
             "calcs": [
-              "lastNotNull"
+              "sum"
             ]
           },
           "colorMode": "background",
