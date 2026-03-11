@@ -89,8 +89,9 @@ if (-not [string]::IsNullOrWhiteSpace($grafanaAdminPrincipalId)) {
 # ── Deploy Bicep Template ──────────────────────────────────────────────
 
 Write-Host "`n[3/6] Deploying infrastructure (this takes ~5-6 minutes)..." -ForegroundColor Yellow
-Write-Host "  Deploying: Log Analytics, Service Bus, Key Vault, API Connections," -ForegroundColor Gray
-Write-Host "             Logic Apps (Intake + Router), APIM, Grafana, Diagnostics" -ForegroundColor Gray
+Write-Host "  Deploying: Log Analytics, VNet, Service Bus (Premium), Key Vault," -ForegroundColor Gray
+Write-Host "             Private Endpoints, Logic Apps, APIM (StandardV2)," -ForegroundColor Gray
+Write-Host "             Grafana, Diagnostics, Alerts" -ForegroundColor Gray
 
 $deploymentName = "healthcare-demo-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 
@@ -157,7 +158,12 @@ $expectedTypes = @(
     "Microsoft.Web/connections",
     "Microsoft.Logic/workflows",
     "Microsoft.ApiManagement/service",
-    "Microsoft.Dashboard/grafana"
+    "Microsoft.Dashboard/grafana",
+    "Microsoft.Network/virtualNetworks",
+    "Microsoft.Network/privateEndpoints",
+    "Microsoft.Network/privateDnsZones",
+    "Microsoft.Insights/metricAlerts",
+    "Microsoft.Insights/actionGroups"
 )
 
 $allFound = $true

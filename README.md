@@ -1,6 +1,8 @@
-# Azure Logic Apps Healthcare Referral Routing Demo
+# Azure Logic Apps Healthcare Referral Routing Demo — SFI Hardened
 
 Automated patient referral intake and priority-based routing using Azure Logic Apps, Service Bus, and API Management — deployed in minutes with Bicep Infrastructure-as-Code.
+
+**This fork applies full SFI (Secure Future Initiative) and Azure Well-Architected Framework hardening** to the original [azure-logic-app-demo](https://github.com/mhuot/azure-logic-app-demo).
 
 ## Architecture Overview
 
@@ -10,8 +12,13 @@ flowchart LR
         A["test-referral.ps1 (HTTP POST)"]
     end
 
-    subgraph api["API Layer ⚬ optional"]
-        B["API Management\nConsumption Tier\nRate Limited: 10/min"]
+    subgraph api["API Layer"]
+        B["API Management\nStandardV2 Tier\nRate Limited: 10/min\nJWT Validation"]
+    end
+
+    subgraph network["Network Security (SFI)"]
+        V["VNet + NSGs\nDeny-by-default"]
+        PE["Private Endpoints\n+ Private DNS"]
     end
 
     subgraph processing["Processing"]
@@ -19,35 +26,39 @@ flowchart LR
         F["Logic App: Router\nPriority Check"]
     end
 
-    subgraph messaging["Service Bus Queues"]
+    subgraph messaging["Service Bus Queues (Premium)"]
         D[incoming-referrals]
         G["urgent-referrals\npriority = urgent / high"]
         H["standard-referrals\npriority = normal / low"]
     end
 
-    subgraph security["Cross-Cutting Services ⚬ optional"]
-        I["Key Vault\nConnection Strings"]
-        J["Log Analytics\nDiagnostics & Audit"]
+    subgraph security["Cross-Cutting Services"]
+        I["Key Vault\nPurge Protected\nPrivate Endpoint"]
+        J["Log Analytics\n+ Alerts & Action Groups"]
         K["Managed Identity\nRBAC — No Passwords"]
     end
 
     A -->|HTTPS + API Key| B
     B -->|Proxy| C
-    C -->|Enqueue| D
+    C -->|Enqueue via PE| D
     D -->|Dequeue| F
     F -->|urgent / high| G
     F -->|normal / low| H
 
+    V -.->|isolates| B
+    V -.->|isolates| C
+    PE -.->|private link| D
+    PE -.->|private link| I
     I -.->|secrets| C
     I -.->|secrets| F
-    J -.->|logs| C
-    J -.->|logs| F
+    J -.->|logs + alerts| C
+    J -.->|logs + alerts| F
     J -.->|logs| B
     J -.->|logs| D
     K -.->|auth| C
     K -.->|auth| F
 
-    style api fill:#f5f5f5,stroke:#595959,stroke-dasharray: 5 5,color:#1a1a1a
+    style network fill:#e8f5e9,stroke:#2e7d32,color:#1a1a1a
     style security fill:#f5f5f5,stroke:#595959,stroke-dasharray: 5 5,color:#1a1a1a
 ```
 
@@ -145,30 +156,37 @@ Runs continuously at low volume so Grafana dashboards have data spread across ti
 ## Project Structure
 
 ```
-azure-logic-app-demo/
+azure-logic-app-sfi-demo/
 ├── main.bicep                          # Orchestrator — calls all modules in dependency order
+├── bicepconfig.json                    # Security-focused Bicep linter rules
 ├── deploy.ps1                          # Deploys infrastructure + validates resources
 ├── test-referral.ps1                   # Sends 3 synthetic test referrals
 ├── test-referral-load.ps1              # Burst load test for Grafana chart data
 ├── test-referral-soak.ps1              # Continuous low-volume sender (pre-demo warmup)
 ├── demo-helper.ps1                     # Pre-demo validation + Portal links + cheat sheet
+├── .github/workflows/
+│   ├── validate.yml                    # CI: Bicep lint + build on push/PR
+│   └── deploy.yml                      # CD: Manual deploy with environment approval
 ├── parameters/
 │   └── dev.bicepparam                  # Dev environment parameters
 ├── modules/
 │   ├── log-analytics.bicep             # Log Analytics workspace (30-day retention)
-│   ├── service-bus.bicep               # Namespace + 3 queues (incoming/urgent/standard)
-│   ├── key-vault.bicep                 # Key Vault + Service Bus connection string secret
+│   ├── virtual-network.bicep           # VNet + NSGs + subnets (SFI network isolation)
+│   ├── service-bus.bicep               # Premium namespace + 3 queues + scoped SAS keys
+│   ├── key-vault.bicep                 # Key Vault (RBAC, purge protected, private)
+│   ├── private-endpoints.bicep         # Private endpoints + DNS for SB & KV
 │   ├── api-connections.bicep           # Service Bus API connection (managed identity)
 │   ├── logic-app-intake.bicep          # Intake: HTTP trigger → validate → enrich → enqueue
 │   ├── logic-app-router.bicep          # Router: dequeue → priority check → route
 │   ├── role-assignments.bicep          # RBAC: SB Data Sender/Receiver + KV Secrets User
-│   ├── apim.bicep                      # API Management (Consumption, rate-limited)
-│   ├── grafana.bicep                   # Azure Managed Grafana (Standard tier)
+│   ├── apim.bicep                      # API Management (StandardV2, JWT validation)
+│   ├── grafana.bicep                   # Azure Managed Grafana (private access)
+│   ├── alerts.bicep                    # Metric/log alerts + action group
 │   └── diagnostics.bicep              # Diagnostic settings → Log Analytics
 └── docs/
-    ├── architecture.excalidraw         # Visual architecture diagram (open in Excalidraw)
+    ├── architecture.excalidraw         # Visual architecture diagram
     ├── architecture.mermaid            # Mermaid diagram source
-    ├── grafana-dashboard.json          # Grafana dashboard definition (auto-imported on deploy)
+    ├── grafana-dashboard.json          # Grafana dashboard (auto-imported)
     └── demo-script.md                  # 15-minute presenter walkthrough
 ```
 
@@ -177,15 +195,18 @@ azure-logic-app-demo/
 | # | Module | Purpose | Key Outputs |
 |---|--------|---------|-------------|
 | 1 | `log-analytics.bicep` | Log Analytics workspace for centralized diagnostics | `workspaceId` |
-| 2 | `service-bus.bicep` | Service Bus Standard namespace + 3 queues | `namespaceName`, `namespaceId` |
-| 3 | `key-vault.bicep` | Key Vault (RBAC-enabled) storing SB connection string | `vaultUri`, `vaultName`, `vaultId` |
+| 1b | `virtual-network.bicep` | VNet with NSGs and subnets for network isolation | `vnetId`, subnet IDs |
+| 2 | `service-bus.bicep` | Service Bus Premium namespace + 3 queues + scoped SAS keys | `namespaceName`, `namespaceId` |
+| 3 | `key-vault.bicep` | Key Vault (RBAC, purge protected, private) with SB connection string | `vaultUri`, `vaultName`, `vaultId` |
+| 3b | `private-endpoints.bicep` | Private endpoints + DNS zones for Service Bus & Key Vault | PE names |
 | 4 | `api-connections.bicep` | Service Bus API connection with managed identity auth | `connectionId`, `connectionName` |
 | 5 | `logic-app-intake.bicep` | HTTP trigger intake workflow with schema validation | `principalId`, `name`, `resourceId` |
 | 6 | `logic-app-router.bicep` | Queue-triggered router with priority-based routing | `principalId` |
 | 7 | `role-assignments.bicep` | RBAC grants for both Logic App managed identities | — |
-| 8 | `apim.bicep` | API Management gateway with subscription key + rate limit | `gatewayUrl`, `referralEndpoint` |
-| 9 | `grafana.bicep` | Azure Managed Grafana with Monitoring Reader + Log Analytics Reader roles | `endpoint`, `name` |
+| 8 | `apim.bicep` | API Management StandardV2 with rate limit + optional JWT | `gatewayUrl`, `referralEndpoint` |
+| 9 | `grafana.bicep` | Azure Managed Grafana (private access) with reader roles | `endpoint`, `name` |
 | 10 | `diagnostics.bicep` | Diagnostic settings for all resources → Log Analytics | — |
+| 11 | `alerts.bicep` | Metric/log alerts + action group for incident response | `actionGroupId` |
 
 ### Deployment Order
 
@@ -256,6 +277,21 @@ The intake Logic App adds these fields before queuing:
 | `receivedAt` | ISO 8601 timestamp | Audit trail |
 | `status` | `"received"` | Workflow state tracking |
 
+## SFI & WAF Alignment
+
+This hardened version addresses the six pillars of the [Azure Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/) and [Microsoft Secure Future Initiative](https://www.microsoft.com/en-us/security/blog/2023/11/02/announcing-microsoft-secure-future-initiative-to-advance-security-engineering/) principles:
+
+| SFI / WAF Pillar | Controls Implemented |
+|-----------------|---------------------|
+| **Zero Trust (Network)** | VNet with NSGs (deny-by-default), private endpoints for Service Bus & Key Vault, private DNS zones, Grafana private access |
+| **Identity & Secrets** | Managed identities + RBAC throughout, Key Vault with purge protection + 90-day soft delete, scoped SAS keys per Logic App (no RootManageSharedAccessKey) |
+| **API Security** | APIM StandardV2 with rate limiting, subscription keys, optional Azure AD JWT validation |
+| **Encryption** | TLS 1.2 enforced on Service Bus Premium, HTTPS-only on APIM, Azure-managed encryption at rest |
+| **Audit & Incident Response** | Comprehensive diagnostic logging, metric alerts (dead-letter, queue depth, failed runs), KQL-based Key Vault unauthorized access alerts, action group with email notifications |
+| **Operational Excellence** | GitHub Actions CI/CD (lint + validate + deploy), security-focused Bicep linter rules, modular IaC with clear dependencies |
+| **Reliability** | Service Bus Premium (geo-DR capable), retry policies with exponential backoff, dead-letter queues on all 3 queues |
+| **Cost Optimization** | Right-sized tiers documented with cost impact; consumption Logic Apps |
+
 ## Security & Compliance
 
 This architecture implements security controls aligned with HIPAA requirements:
@@ -286,14 +322,16 @@ All resources use consumption or low-cost tiers suitable for demos:
 
 | Resource | Tier | Estimated Monthly Cost |
 |----------|------|----------------------|
-| API Management | Consumption | ~$3.50/million calls |
+| API Management | StandardV2 | ~$170/month |
 | Logic Apps (2x) | Consumption | ~$0.000025/action |
-| Service Bus | Standard | ~$10/month base |
+| Service Bus | Premium | ~$700/month base |
 | Key Vault | Standard | ~$0.03/10K operations |
 | Log Analytics | Pay-per-GB | ~$2.76/GB ingested |
 | Managed Grafana | Standard | ~$0.05/hour (~$36/month) |
+| VNet + Private Endpoints | — | ~$22/month |
+| Alerts | — | Included |
 
-**Estimated total for demo usage**: < $50/month (tear down after demo to minimize cost).
+**Estimated total**: ~$930/month (production-grade hardening has higher cost than demo tiers). Tear down after demo to minimize cost.
 
 ## Observability
 
