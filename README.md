@@ -78,14 +78,17 @@ az group delete --name rg-healthcare-referral-demo --yes --no-wait
 After deployment, retrieve the APIM endpoint and subscription key:
 
 ```powershell
-# Get the APIM gateway URL
 $rg = "rg-healthcare-referral-demo"
+
+# Get the APIM gateway URL
 $apimName = az resource list -g $rg --resource-type Microsoft.ApiManagement/service --query "[0].name" -o tsv
 $gateway = az apim show -n $apimName -g $rg --query "gatewayUrl" -o tsv
 $endpoint = "$gateway/referrals/submit"
 
-# Get the subscription key
-$subKey = az apim subscription show -g $rg -n $apimName --subscription-id "referral-subscription" --query "primaryKey" -o tsv
+# Get the subscription key (uses REST API — works on all Azure CLI versions)
+$subId = az account show --query id -o tsv
+$apimRid = "/subscriptions/$subId/resourceGroups/$rg/providers/Microsoft.ApiManagement/service/$apimName"
+$subKey = az rest --method post --url "$apimRid/subscriptions/referral-subscription/listSecrets?api-version=2022-08-01" --query "primaryKey" -o tsv
 
 Write-Host "Endpoint: $endpoint"
 Write-Host "Key:      $subKey"
