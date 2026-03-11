@@ -432,7 +432,7 @@
               "resourceGroup": "${RG}",
               "resourceName": "${APIM_NAME}",
               "metricDefinition": "Microsoft.ApiManagement/service",
-              "metricName": "TotalRequests",
+              "metricName": "Requests",
               "timeGrain": "PT1M",
               "aggregation": "Total"
             }
@@ -444,9 +444,16 @@
               "resourceGroup": "${RG}",
               "resourceName": "${APIM_NAME}",
               "metricDefinition": "Microsoft.ApiManagement/service",
-              "metricName": "SuccessfulRequests",
+              "metricName": "Requests",
               "timeGrain": "PT1M",
-              "aggregation": "Total"
+              "aggregation": "Total",
+              "dimensionFilters": [
+                {
+                  "dimension": "GatewayResponseCodeCategory",
+                  "operator": "eq",
+                  "filters": ["2xx"]
+                }
+              ]
             }
           },
           {
@@ -456,9 +463,16 @@
               "resourceGroup": "${RG}",
               "resourceName": "${APIM_NAME}",
               "metricDefinition": "Microsoft.ApiManagement/service",
-              "metricName": "FailedRequests",
+              "metricName": "Requests",
               "timeGrain": "PT1M",
-              "aggregation": "Total"
+              "aggregation": "Total",
+              "dimensionFilters": [
+                {
+                  "dimension": "GatewayResponseCodeCategory",
+                  "operator": "eq",
+                  "filters": ["4xx", "5xx"]
+                }
+              ]
             }
           }
         ],
