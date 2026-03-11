@@ -310,7 +310,6 @@ The deployment includes an **Azure Managed Grafana** instance (Standard tier) wi
 | Intake Logic App Runs | Time series (stacked bar) | Log Analytics (KQL) |
 | Router Logic App Runs | Time series (stacked bar) | Log Analytics (KQL) |
 | Queue Message Flow | Time series (line) | Azure Monitor Metrics |
-| Active Messages per Queue | Bar gauge | Azure Monitor Metrics |
 | APIM Requests (Total / Success / Failed) | Time series (line) | Azure Monitor Metrics |
 | Recent Referral Activity | Table | Log Analytics (KQL) |
 

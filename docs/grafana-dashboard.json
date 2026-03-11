@@ -4,7 +4,12 @@
     "uid": "healthcare-referral-routing",
     "title": "Healthcare Referral Routing",
     "description": "Real-time monitoring of the patient referral intake and routing pipeline",
-    "tags": ["azure", "healthcare", "logic-apps", "service-bus"],
+    "tags": [
+      "azure",
+      "healthcare",
+      "logic-apps",
+      "service-bus"
+    ],
     "timezone": "browser",
     "schemaVersion": 39,
     "version": 1,
@@ -21,14 +26,24 @@
         "id": 1,
         "title": "Referral Pipeline Overview",
         "type": "row",
-        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
         "collapsed": false
       },
       {
         "id": 2,
         "title": "Total Referrals Received",
         "type": "stat",
-        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 0,
+          "y": 1
+        },
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
           "uid": "${DS_AZURE_MONITOR}"
@@ -39,7 +54,9 @@
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
               "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-intake\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize Total=count(), TimeGenerated=max(TimeGenerated)",
-              "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
+              "resources": [
+                "${LAW_WORKSPACE_RESOURCE_ID}"
+              ],
               "resultFormat": "table",
               "timeColumn": "TimeGenerated"
             }
@@ -47,7 +64,9 @@
         ],
         "options": {
           "reduceOptions": {
-            "calcs": ["sum"]
+            "calcs": [
+              "sum"
+            ]
           },
           "colorMode": "background",
           "graphMode": "none",
@@ -55,11 +74,19 @@
         },
         "fieldConfig": {
           "defaults": {
-            "color": { "mode": "thresholds" },
+            "color": {
+              "mode": "thresholds"
+            },
             "thresholds": {
               "steps": [
-                { "color": "blue", "value": null },
-                { "color": "green", "value": 1 }
+                {
+                  "color": "blue",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
               ]
             }
           }
@@ -69,7 +96,12 @@
         "id": 3,
         "title": "Urgent Referrals",
         "type": "stat",
-        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 6,
+          "y": 1
+        },
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
           "uid": "${DS_AZURE_MONITOR}"
@@ -88,7 +120,9 @@
                 {
                   "dimension": "EntityName",
                   "operator": "eq",
-                  "filters": ["urgent-referrals"]
+                  "filters": [
+                    "urgent-referrals"
+                  ]
                 }
               ],
               "aggregation": "Total"
@@ -97,7 +131,9 @@
         ],
         "options": {
           "reduceOptions": {
-            "calcs": ["sum"]
+            "calcs": [
+              "sum"
+            ]
           },
           "colorMode": "background",
           "graphMode": "none",
@@ -105,11 +141,19 @@
         },
         "fieldConfig": {
           "defaults": {
-            "color": { "mode": "thresholds" },
+            "color": {
+              "mode": "thresholds"
+            },
             "thresholds": {
               "steps": [
-                { "color": "dark-red", "value": null },
-                { "color": "red", "value": 1 }
+                {
+                  "color": "dark-red",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 1
+                }
               ]
             }
           }
@@ -119,7 +163,12 @@
         "id": 4,
         "title": "Standard Referrals",
         "type": "stat",
-        "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 12,
+          "y": 1
+        },
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
           "uid": "${DS_AZURE_MONITOR}"
@@ -138,7 +187,9 @@
                 {
                   "dimension": "EntityName",
                   "operator": "eq",
-                  "filters": ["standard-referrals"]
+                  "filters": [
+                    "standard-referrals"
+                  ]
                 }
               ],
               "aggregation": "Total"
@@ -147,7 +198,9 @@
         ],
         "options": {
           "reduceOptions": {
-            "calcs": ["lastNotNull"]
+            "calcs": [
+              "lastNotNull"
+            ]
           },
           "colorMode": "background",
           "graphMode": "none",
@@ -155,11 +208,19 @@
         },
         "fieldConfig": {
           "defaults": {
-            "color": { "mode": "thresholds" },
+            "color": {
+              "mode": "thresholds"
+            },
             "thresholds": {
               "steps": [
-                { "color": "dark-green", "value": null },
-                { "color": "green", "value": 1 }
+                {
+                  "color": "dark-green",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
               ]
             }
           }
@@ -169,7 +230,12 @@
         "id": 5,
         "title": "Validation Errors",
         "type": "stat",
-        "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 18,
+          "y": 1
+        },
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
           "uid": "${DS_AZURE_MONITOR}"
@@ -180,7 +246,9 @@
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
               "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-intake\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize ValidationErrors=countif(status_s == \"Failed\"), TimeGenerated=max(TimeGenerated)",
-              "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
+              "resources": [
+                "${LAW_WORKSPACE_RESOURCE_ID}"
+              ],
               "resultFormat": "table",
               "timeColumn": "TimeGenerated"
             }
@@ -188,7 +256,9 @@
         ],
         "options": {
           "reduceOptions": {
-            "calcs": ["lastNotNull"]
+            "calcs": [
+              "lastNotNull"
+            ]
           },
           "colorMode": "background",
           "graphMode": "none",
@@ -196,12 +266,23 @@
         },
         "fieldConfig": {
           "defaults": {
-            "color": { "mode": "thresholds" },
+            "color": {
+              "mode": "thresholds"
+            },
             "thresholds": {
               "steps": [
-                { "color": "green", "value": null },
-                { "color": "orange", "value": 1 },
-                { "color": "red", "value": 5 }
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "orange",
+                  "value": 1
+                },
+                {
+                  "color": "red",
+                  "value": 5
+                }
               ]
             }
           }
@@ -211,14 +292,24 @@
         "id": 6,
         "title": "Logic App Workflows",
         "type": "row",
-        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 7
+        },
         "collapsed": false
       },
       {
         "id": 7,
-        "title": "Intake Logic App — Runs Over Time",
+        "title": "Intake Logic App \u00e2\u20ac\u201d Runs Over Time",
         "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
           "uid": "${DS_AZURE_MONITOR}"
@@ -229,41 +320,77 @@
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
               "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-intake\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize Succeeded=countif(status_s == \"Succeeded\"), Failed=countif(status_s == \"Failed\") by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
-              "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
+              "resources": [
+                "${LAW_WORKSPACE_RESOURCE_ID}"
+              ],
               "resultFormat": "time_series",
               "timeColumn": "TimeGenerated"
             }
           }
         ],
         "options": {
-          "tooltip": { "mode": "multi" },
-          "legend": { "displayMode": "list", "placement": "bottom" }
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
         },
         "fieldConfig": {
           "defaults": {
             "custom": {
               "drawStyle": "bars",
               "fillOpacity": 80,
-              "stacking": { "mode": "normal" }
+              "stacking": {
+                "mode": "normal"
+              }
             }
           },
           "overrides": [
             {
-              "matcher": { "id": "byName", "options": "Succeeded" },
-              "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+              "matcher": {
+                "id": "byName",
+                "options": "Succeeded"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "fixedColor": "green",
+                    "mode": "fixed"
+                  }
+                }
+              ]
             },
             {
-              "matcher": { "id": "byName", "options": "Failed" },
-              "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+              "matcher": {
+                "id": "byName",
+                "options": "Failed"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "fixedColor": "red",
+                    "mode": "fixed"
+                  }
+                }
+              ]
             }
           ]
         }
       },
       {
         "id": 8,
-        "title": "Router Logic App — Runs Over Time",
+        "title": "Router Logic App \u00e2\u20ac\u201d Runs Over Time",
         "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
           "uid": "${DS_AZURE_MONITOR}"
@@ -274,32 +401,63 @@
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
               "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_workflowName_s endswith \"-router\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| summarize Succeeded=countif(status_s == \"Succeeded\"), Failed=countif(status_s == \"Failed\") by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
-              "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
+              "resources": [
+                "${LAW_WORKSPACE_RESOURCE_ID}"
+              ],
               "resultFormat": "time_series",
               "timeColumn": "TimeGenerated"
             }
           }
         ],
         "options": {
-          "tooltip": { "mode": "multi" },
-          "legend": { "displayMode": "list", "placement": "bottom" }
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
         },
         "fieldConfig": {
           "defaults": {
             "custom": {
               "drawStyle": "bars",
               "fillOpacity": 80,
-              "stacking": { "mode": "normal" }
+              "stacking": {
+                "mode": "normal"
+              }
             }
           },
           "overrides": [
             {
-              "matcher": { "id": "byName", "options": "Succeeded" },
-              "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+              "matcher": {
+                "id": "byName",
+                "options": "Succeeded"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "fixedColor": "green",
+                    "mode": "fixed"
+                  }
+                }
+              ]
             },
             {
-              "matcher": { "id": "byName", "options": "Failed" },
-              "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+              "matcher": {
+                "id": "byName",
+                "options": "Failed"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "fixedColor": "red",
+                    "mode": "fixed"
+                  }
+                }
+              ]
             }
           ]
         }
@@ -308,14 +466,24 @@
         "id": 9,
         "title": "Service Bus Queues",
         "type": "row",
-        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        },
         "collapsed": false
       },
       {
         "id": 10,
         "title": "Queue Message Flow",
         "type": "timeseries",
-        "gridPos": { "h": 8, "w": 16, "x": 0, "y": 17 },
+        "gridPos": {
+          "h": 8,
+          "w": 16,
+          "x": 0,
+          "y": 17
+        },
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
           "uid": "${DS_AZURE_MONITOR}"
@@ -334,7 +502,11 @@
                 {
                   "dimension": "EntityName",
                   "operator": "eq",
-                  "filters": ["incoming-referrals", "urgent-referrals", "standard-referrals"]
+                  "filters": [
+                    "incoming-referrals",
+                    "urgent-referrals",
+                    "standard-referrals"
+                  ]
                 }
               ],
               "aggregation": "Total"
@@ -342,8 +514,16 @@
           }
         ],
         "options": {
-          "tooltip": { "mode": "multi" },
-          "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] }
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "calcs": [
+              "sum"
+            ]
+          }
         },
         "fieldConfig": {
           "defaults": {
@@ -358,68 +538,27 @@
         }
       },
       {
-        "id": 11,
-        "title": "Active Messages per Queue",
-        "type": "bargauge",
-        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 17 },
-        "datasource": {
-          "type": "grafana-azure-monitor-datasource",
-          "uid": "${DS_AZURE_MONITOR}"
-        },
-        "targets": [
-          {
-            "refId": "A",
-            "queryType": "Azure Monitor",
-            "azureMonitor": {
-              "resourceGroup": "${RG}",
-              "resourceName": "${SB_NAMESPACE}",
-              "metricDefinition": "Microsoft.ServiceBus/namespaces",
-              "metricName": "ActiveMessages",
-              "timeGrain": "PT1M",
-              "dimensionFilters": [
-                {
-                  "dimension": "EntityName",
-                  "operator": "eq",
-                  "filters": ["incoming-referrals", "urgent-referrals", "standard-referrals"]
-                }
-              ],
-              "aggregation": "Average"
-            }
-          }
-        ],
-        "options": {
-          "reduceOptions": {
-            "calcs": ["lastNotNull"]
-          },
-          "orientation": "horizontal",
-          "displayMode": "gradient",
-          "showUnfilled": true
-        },
-        "fieldConfig": {
-          "defaults": {
-            "color": { "mode": "thresholds" },
-            "thresholds": {
-              "steps": [
-                { "color": "green", "value": null },
-                { "color": "yellow", "value": 5 },
-                { "color": "red", "value": 20 }
-              ]
-            }
-          }
-        }
-      },
-      {
         "id": 12,
         "title": "API Gateway",
         "type": "row",
-        "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 25
+        },
         "collapsed": false
       },
       {
         "id": 13,
         "title": "APIM Requests (Total / Success / Failed)",
         "type": "timeseries",
-        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 26
+        },
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
           "uid": "${DS_AZURE_MONITOR}"
@@ -451,7 +590,9 @@
                 {
                   "dimension": "GatewayResponseCodeCategory",
                   "operator": "eq",
-                  "filters": ["2xx"]
+                  "filters": [
+                    "2xx"
+                  ]
                 }
               ]
             }
@@ -470,22 +611,32 @@
                 {
                   "dimension": "GatewayResponseCodeCategory",
                   "operator": "eq",
-                  "filters": ["4xx", "5xx"]
+                  "filters": [
+                    "4xx",
+                    "5xx"
+                  ]
                 }
               ]
             }
           }
         ],
         "options": {
-          "tooltip": { "mode": "multi" },
-          "legend": { "displayMode": "list", "placement": "bottom" }
+          "tooltip": {
+            "mode": "multi"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
         },
         "fieldConfig": {
           "defaults": {
             "custom": {
               "drawStyle": "bars",
               "fillOpacity": 80,
-              "stacking": { "mode": "normal" }
+              "stacking": {
+                "mode": "normal"
+              }
             }
           }
         }
@@ -494,7 +645,12 @@
         "id": 14,
         "title": "Recent Referral Activity",
         "type": "table",
-        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 26
+        },
         "datasource": {
           "type": "grafana-azure-monitor-datasource",
           "uid": "${DS_AZURE_MONITOR}"
@@ -505,7 +661,9 @@
             "queryType": "Azure Log Analytics",
             "azureLogAnalytics": {
               "query": "AzureDiagnostics\n| where $__timeFilter(TimeGenerated)\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where Category == \"WorkflowRuntime\"\n| where OperationName == \"Microsoft.Logic/workflows/workflowRunCompleted\"\n| project Time=TimeGenerated, Workflow=resource_workflowName_s, Status=status_s, TrackingId=correlation_clientTrackingId_s\n| order by Time desc\n| take 15",
-              "resources": ["${LAW_WORKSPACE_RESOURCE_ID}"],
+              "resources": [
+                "${LAW_WORKSPACE_RESOURCE_ID}"
+              ],
               "resultFormat": "table",
               "timeColumn": "Time"
             }
@@ -513,12 +671,20 @@
         ],
         "options": {
           "showHeader": true,
-          "sortBy": [{ "displayName": "Time", "desc": true }]
+          "sortBy": [
+            {
+              "displayName": "Time",
+              "desc": true
+            }
+          ]
         },
         "fieldConfig": {
           "overrides": [
             {
-              "matcher": { "id": "byName", "options": "Status" },
+              "matcher": {
+                "id": "byName",
+                "options": "Status"
+              },
               "properties": [
                 {
                   "id": "custom.cellOptions",
@@ -529,8 +695,24 @@
                 {
                   "id": "mappings",
                   "value": [
-                    { "type": "value", "options": { "Succeeded": { "color": "green", "text": "Succeeded" } } },
-                    { "type": "value", "options": { "Failed": { "color": "red", "text": "Failed" } } }
+                    {
+                      "type": "value",
+                      "options": {
+                        "Succeeded": {
+                          "color": "green",
+                          "text": "Succeeded"
+                        }
+                      }
+                    },
+                    {
+                      "type": "value",
+                      "options": {
+                        "Failed": {
+                          "color": "red",
+                          "text": "Failed"
+                        }
+                      }
+                    }
                   ]
                 }
               ]
