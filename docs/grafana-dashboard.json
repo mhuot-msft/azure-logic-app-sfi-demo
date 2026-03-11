@@ -302,7 +302,7 @@
       },
       {
         "id": 7,
-        "title": "Intake Logic App \u00e2\u20ac\u201d Runs Over Time",
+        "title": "Intake Logic App - Runs Over Time",
         "type": "timeseries",
         "gridPos": {
           "h": 8,
@@ -383,7 +383,7 @@
       },
       {
         "id": 8,
-        "title": "Router Logic App \u00e2\u20ac\u201d Runs Over Time",
+        "title": "Router Logic App - Runs Over Time",
         "type": "timeseries",
         "gridPos": {
           "h": 8,
@@ -480,7 +480,7 @@
         "type": "timeseries",
         "gridPos": {
           "h": 8,
-          "w": 16,
+          "w": 24,
           "x": 0,
           "y": 17
         },
