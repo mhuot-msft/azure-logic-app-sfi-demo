@@ -36,4 +36,3 @@ output connectionId string = serviceBusConnection.id
 
 @description('API connection name')
 output connectionName string = serviceBusConnection.name
-

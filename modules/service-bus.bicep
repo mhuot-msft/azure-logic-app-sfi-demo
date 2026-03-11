@@ -9,6 +9,9 @@ param baseName string
 @description('Resource tags')
 param tags object
 
+@description('Connector outbound IP ranges to allow through the Service Bus firewall (e.g., AzureConnectors service tag)')
+param connectorOutboundIpRanges array = []
+
 var namespaceName = '${baseName}-sbns'
 
 resource namespace 'Microsoft.ServiceBus/namespaces@2022-10-01-preview' = {
@@ -24,6 +27,22 @@ resource namespace 'Microsoft.ServiceBus/namespaces@2022-10-01-preview' = {
     publicNetworkAccess: 'Disabled'
     minimumTlsVersion: '1.2'
     premiumMessagingPartitions: 1
+  }
+}
+
+// Network rule set: deny all public access, allow only connector IPs
+resource networkRuleSet 'Microsoft.ServiceBus/namespaces/networkRuleSets@2022-10-01-preview' = {
+  parent: namespace
+  name: 'default'
+  properties: {
+    publicNetworkAccess: 'Enabled'
+    defaultAction: 'Deny'
+    trustedServiceAccessEnabled: true
+    ipRules: [for ip in connectorOutboundIpRanges: {
+      ipMask: ip
+      action: 'Allow'
+    }]
+    virtualNetworkRules: []
   }
 }
 

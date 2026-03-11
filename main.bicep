@@ -29,6 +29,9 @@ param vnetAddressPrefix string = '10.0.0.0/16'
 @description('Azure AD tenant ID for APIM JWT validation (leave empty to skip)')
 param apimTenantId string = ''
 
+@description('Connector outbound IP ranges for Service Bus firewall (AzureConnectors service tag for your region)')
+param connectorOutboundIpRanges array = []
+
 var suffix = uniqueString(resourceGroup().id)
 var baseName = 'hlth-${environment}-${suffix}'
 var tags = {
@@ -71,6 +74,7 @@ module serviceBus 'modules/service-bus.bicep' = {
     location: location
     baseName: baseName
     tags: tags
+    connectorOutboundIpRanges: connectorOutboundIpRanges
   }
 }
 
