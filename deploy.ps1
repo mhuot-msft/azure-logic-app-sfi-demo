@@ -35,11 +35,12 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "  Bicep CLI: OK" -ForegroundColor Green
 
 # Check Azure login
-$account = az account show 2>&1 | ConvertFrom-Json
+$accountRaw = az account show --output json 2>$null
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Not logged in to Azure. Run: az login"
     exit 1
 }
+$account = $accountRaw | ConvertFrom-Json
 Write-Host "  Azure login: OK (subscription: $($account.name))" -ForegroundColor Green
 
 # Best-effort: assign signed-in user Grafana Admin role during deployment

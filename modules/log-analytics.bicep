@@ -23,8 +23,29 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   }
 }
 
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: '${baseName}-appi'
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: workspace.id
+    RetentionInDays: 30
+  }
+}
+
 @description('Log Analytics workspace resource ID')
 output workspaceId string = workspace.id
 
 @description('Log Analytics workspace name')
 output workspaceName string = workspace.name
+
+@description('Application Insights instrumentation key')
+output appInsightsInstrumentationKey string = appInsights.properties.InstrumentationKey
+
+@description('Application Insights resource ID')
+output appInsightsId string = appInsights.id
+
+@description('Application Insights connection string')
+output appInsightsConnectionString string = appInsights.properties.ConnectionString

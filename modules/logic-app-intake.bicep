@@ -262,64 +262,120 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
             ]
           }
           actions: {
-            Compose_Enriched_Referral: {
-              type: 'Compose'
+            Process_Referral: {
+              type: 'Scope'
               runAfter: {}
-              inputs: {
-                correlationId: '@{guid()}'
-                receivedAt: '@{utcNow()}'
-                patientId: '@triggerBody()?[\'patientId\']'
-                patientName: '@triggerBody()?[\'patientName\']'
-                referralType: '@triggerBody()?[\'referralType\']'
-                priority: '@triggerBody()?[\'priority\']'
-                diagnosis: '@triggerBody()?[\'diagnosis\']'
-                referringProvider: '@triggerBody()?[\'referringProvider\']'
-                notes: '@triggerBody()?[\'notes\']'
-                status: 'received'
-              }
-            }
-            Send_to_Incoming_Queue: {
-              type: 'ApiConnection'
-              runAfter: {
-                Compose_Enriched_Referral: [
-                  'Succeeded'
-                ]
-              }
-              inputs: {
-                host: {
-                  connection: {
-                    name: '@parameters(\'$connections\')[\'servicebus\'][\'connectionId\']'
+              actions: {
+                Enrich_Metadata: {
+                  type: 'Compose'
+                  runAfter: {}
+                  inputs: {
+                    correlationId: '@{guid()}'
+                    receivedAt: '@{utcNow()}'
+                    status: 'received'
                   }
                 }
-                method: 'post'
-                path: '/@{encodeURIComponent(encodeURIComponent(\'incoming-referrals\'))}/messages'
-                body: {
-                  ContentData: '@{base64(string(outputs(\'Compose_Enriched_Referral\')))}'
-                  ContentType: 'application/json'
-                  Properties: {
-                    priority: '@triggerBody()?[\'priority\']'
+                Assemble_Clinical_Data: {
+                  type: 'Compose'
+                  runAfter: {}
+                  inputs: {
+                    patientId: '@triggerBody()?[\'patientId\']'
+                    patientName: '@triggerBody()?[\'patientName\']'
                     referralType: '@triggerBody()?[\'referralType\']'
-                    correlationId: '@outputs(\'Compose_Enriched_Referral\')?[\'correlationId\']'
+                    priority: '@triggerBody()?[\'priority\']'
+                    diagnosis: '@triggerBody()?[\'diagnosis\']'
+                    referringProvider: '@triggerBody()?[\'referringProvider\']'
+                    notes: '@triggerBody()?[\'notes\']'
+                  }
+                }
+                Compose_Enriched_Referral: {
+                  type: 'Compose'
+                  runAfter: {
+                    Enrich_Metadata: [
+                      'Succeeded'
+                    ]
+                    Assemble_Clinical_Data: [
+                      'Succeeded'
+                    ]
+                  }
+                  inputs: '@union(outputs(\'Enrich_Metadata\'), outputs(\'Assemble_Clinical_Data\'))'
+                }
+                Send_to_Incoming_Queue: {
+                  type: 'ApiConnection'
+                  runAfter: {
+                    Compose_Enriched_Referral: [
+                      'Succeeded'
+                    ]
+                  }
+                  inputs: {
+                    host: {
+                      connection: {
+                        name: '@parameters(\'$connections\')[\'servicebus\'][\'connectionId\']'
+                      }
+                    }
+                    method: 'post'
+                    path: '/@{encodeURIComponent(encodeURIComponent(\'incoming-referrals\'))}/messages'
+                    body: {
+                      ContentData: '@{base64(string(outputs(\'Compose_Enriched_Referral\')))}'
+                      ContentType: 'application/json'
+                      Properties: {
+                        priority: '@triggerBody()?[\'priority\']'
+                        referralType: '@triggerBody()?[\'referralType\']'
+                        correlationId: '@outputs(\'Compose_Enriched_Referral\')?[\'correlationId\']'
+                      }
+                    }
+                    retryPolicy: {
+                      count: 3
+                      interval: 'PT10S'
+                      type: 'exponential'
+                      minimumInterval: 'PT10S'
+                      maximumInterval: 'PT1H'
+                    }
+                  }
+                }
+                Response_Success: {
+                  type: 'Response'
+                  runAfter: {
+                    Send_to_Incoming_Queue: [
+                      'Succeeded'
+                    ]
+                  }
+                  inputs: {
+                    statusCode: 202
+                    headers: {
+                      'Content-Type': 'application/json'
+                    }
+                    body: {
+                      status: 'accepted'
+                      correlationId: '@outputs(\'Compose_Enriched_Referral\')?[\'correlationId\']'
+                      message: 'Referral received and queued for processing'
+                    }
                   }
                 }
               }
             }
-            Response_Success: {
-              type: 'Response'
+            Handle_Processing_Error: {
+              type: 'Scope'
               runAfter: {
-                Send_to_Incoming_Queue: [
-                  'Succeeded'
+                Process_Referral: [
+                  'Failed'
+                  'TimedOut'
                 ]
               }
-              inputs: {
-                statusCode: 202
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-                body: {
-                  status: 'accepted'
-                  correlationId: '@outputs(\'Compose_Enriched_Referral\')?[\'correlationId\']'
-                  message: 'Referral received and queued for processing'
+              actions: {
+                Response_Processing_Error: {
+                  type: 'Response'
+                  runAfter: {}
+                  inputs: {
+                    statusCode: 500
+                    headers: {
+                      'Content-Type': 'application/json'
+                    }
+                    body: {
+                      status: 'error'
+                      message: 'An error occurred while processing the referral. Please retry.'
+                    }
+                  }
                 }
               }
             }

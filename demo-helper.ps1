@@ -33,21 +33,23 @@ Write-Host "========================================`n" -ForegroundColor Cyan
 
 # ── Verify Azure Login ──────────────────────────────────────────────
 
-$account = az account show 2>&1 | ConvertFrom-Json
+$accountRaw = az account show --output json 2>$null
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Not logged in to Azure. Run: az login"
     exit 1
 }
+$account = $accountRaw | ConvertFrom-Json
 $subscriptionId = $account.id
 Write-Host "Subscription: $($account.name)" -ForegroundColor Green
 
 # ── Verify Resource Group Exists ──────────────────────────────────────
 
-$rgCheck = az group show --name $ResourceGroupName 2>&1 | ConvertFrom-Json
+$rgCheckRaw = az group show --name $ResourceGroupName --output json 2>$null
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Resource group '$ResourceGroupName' not found. Run deploy.ps1 first."
     exit 1
 }
+$rgCheck = $rgCheckRaw | ConvertFrom-Json
 Write-Host "Resource Group: $ResourceGroupName ($($rgCheck.location))" -ForegroundColor Green
 
 # ── Discover Resources ──────────────────────────────────────────────
@@ -103,14 +105,14 @@ if ($apim) {
     try {
         $apimName = $apim.name
 
-        $apimDetails = az apim show --name $apimName --resource-group $ResourceGroupName --output json 2>&1 | ConvertFrom-Json
+        $apimDetails = az apim show --name $apimName --resource-group $ResourceGroupName --output json 2>$null | ConvertFrom-Json
         $gatewayUrl = $apimDetails.gatewayUrl
         $referralEndpoint = "$gatewayUrl/referrals/submit"
 
         # Get subscription key
         $subKey = az rest --method post `
             --uri "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.ApiManagement/service/$apimName/subscriptions/referral-subscription/listSecrets?api-version=2023-05-01-preview" `
-            --output json 2>&1 | ConvertFrom-Json
+            --output json 2>$null | ConvertFrom-Json
 
         $subscriptionKey = $subKey.primaryKey
 
@@ -130,7 +132,7 @@ if ($apim) {
 $grafanaEndpoint = $null
 if ($grafana) {
     try {
-        $grafanaDetails = az rest --method get --uri "https://management.azure.com$($grafana.id)?api-version=2023-09-01" --output json 2>&1 | ConvertFrom-Json
+        $grafanaDetails = az rest --method get --uri "https://management.azure.com$($grafana.id)?api-version=2023-09-01" --output json 2>$null | ConvertFrom-Json
         $grafanaEndpoint = $grafanaDetails.properties.endpoint
         Write-Host "  Grafana:  $grafanaEndpoint" -ForegroundColor Green
         Add-CheckResult -Success $true

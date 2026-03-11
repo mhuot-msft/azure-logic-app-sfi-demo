@@ -77,14 +77,25 @@ Open `main.bicep` in VS Code or a code viewer.
 >
 > Here's the referral schema. Six required fields: patient ID, name, referral type, priority, diagnosis code, and referring provider. If any of these are missing, the Logic App rejects it immediately with a 400 error. No bad data gets into the pipeline.
 >
+> *(Scroll to the Process_Referral scope)*
+>
+> Notice the structure here — the valid path is wrapped in a **Scope** called Process_Referral. That's our try block. If anything inside it fails — the enrichment, the queue send — it falls through to Handle_Processing_Error, which returns a clean 500 error. This is the same try-catch pattern you'd use in application code, but declarative.
+>
+> Inside the scope, you can see two Compose actions that run **in parallel** — Enrich_Metadata generates the correlation ID and timestamp, while Assemble_Clinical_Data pulls the patient fields. They merge together before the queue send. In a real system with external lookups, this parallelism saves time.
+>
+> Also notice the **retry policy** on Send_to_Incoming_Queue — exponential backoff, three attempts, up to one hour. If Service Bus has a transient hiccup, the workflow retries automatically instead of failing.
+>
 > *(Open `modules/logic-app-router.bicep`, scroll to Check_Priority around line 60)*
 >
-> And here's the routing logic — a simple condition: if priority is urgent or high, route to the urgent queue. Everything else goes to standard. Clean and auditable."
+> And here's the routing logic — a simple condition: if priority is urgent or high, route to the urgent queue. Everything else goes to standard. Same retry policies on both send actions. Clean and auditable."
 
 ### Key points to emphasize
 
 - Everything is Infrastructure-as-Code — no Portal click-ops
 - Schema validation catches bad data at the front door
+- Scopes provide try-catch error handling in declarative workflows
+- Parallel actions demonstrate concurrent execution
+- Retry policies handle transient failures automatically
 - Routing logic is transparent and version-controlled
 
 ---
@@ -238,6 +249,12 @@ If asked:
 
 > "Log Analytics is powerful, but it requires writing KQL queries. Grafana gives you a visual dashboard that updates in real time — much better for ops teams and executives who need a glance, not a query language. And because it's Azure Managed Grafana, there's nothing to install or maintain."
 
+### Application Insights
+
+If asked about deeper diagnostics:
+
+> "We also deploy Application Insights, backed by the same Log Analytics workspace. Application Insights gives you richer diagnostics — dependency tracking, failure analysis, and performance profiling. For Logic Apps, it captures every workflow run with detailed timing and error data. In production, you'd use Application Insights for troubleshooting individual referrals and Grafana for the operational big picture."
+
 ### Fallback — if Grafana data is sparse
 
 If Log Analytics hasn't ingested enough data yet:
@@ -265,6 +282,8 @@ AzureDiagnostics
 ### What to say
 
 > "What I showed you today is a starting point. Here's where you can take it:
+>
+> **Stateful workflows (Standard tier)** — Today's demo uses the Consumption tier, which runs stateless — each workflow executes and forgets. For long-running referral processes that need to wait for specialist responses or track multi-step approvals over days, the Standard tier offers stateful workflows that persist data across runs. Standard also gives you VNET integration, private endpoints, and local development in VS Code.
 >
 > **Teams or email alerts** — Add a Logic App action to send a Teams notification when an urgent referral is received. It's one extra step in the workflow.
 >

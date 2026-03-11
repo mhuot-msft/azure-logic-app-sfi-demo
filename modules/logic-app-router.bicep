@@ -128,6 +128,13 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
                     routedAt: '@{utcNow()}'
                   }
                 }
+                retryPolicy: {
+                  count: 3
+                  interval: 'PT10S'
+                  type: 'exponential'
+                  minimumInterval: 'PT10S'
+                  maximumInterval: 'PT1H'
+                }
               }
             }
           }
@@ -151,6 +158,13 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
                       correlationId: '@body(\'Parse_Message\')?[\'correlationId\']'
                       routedAt: '@{utcNow()}'
                     }
+                  }
+                  retryPolicy: {
+                    count: 3
+                    interval: 'PT10S'
+                    type: 'exponential'
+                    minimumInterval: 'PT10S'
+                    maximumInterval: 'PT1H'
                   }
                 }
               }
