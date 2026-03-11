@@ -80,7 +80,7 @@ resource sbDeadLetterAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           metricNamespace: 'Microsoft.ServiceBus/namespaces'
           operator: 'GreaterThan'
           threshold: 0
-          timeAggregation: 'Total'
+          timeAggregation: 'Average'
           criterionType: 'StaticThresholdCriterion'
         }
       ]
@@ -192,7 +192,7 @@ resource intakeFailedAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           metricNamespace: 'Microsoft.Logic/workflows'
           operator: 'GreaterThan'
           threshold: 0
-          timeAggregation: 'Total'
+          timeAggregation: 'Maximum'
           criterionType: 'StaticThresholdCriterion'
         }
       ]
@@ -229,7 +229,7 @@ resource routerFailedAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
           metricNamespace: 'Microsoft.Logic/workflows'
           operator: 'GreaterThan'
           threshold: 0
-          timeAggregation: 'Total'
+          timeAggregation: 'Maximum'
           criterionType: 'StaticThresholdCriterion'
         }
       ]

@@ -115,7 +115,7 @@ resource kvDiag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
 }
 
 // Note: APIM Consumption tier has limited diagnostic log categories
-resource apimService 'Microsoft.ApiManagement/service@2023-05-01-preview' existing = {
+resource apimService 'Microsoft.ApiManagement/service@2024-06-01-preview' existing = {
   name: apimName
 }
 

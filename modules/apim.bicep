@@ -23,7 +23,7 @@ param tenantId string = ''
 
 var apimName = '${baseName}-apim'
 
-resource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' = {
+resource apim 'Microsoft.ApiManagement/service@2024-06-01-preview' = {
   name: apimName
   location: location
   tags: tags
@@ -37,7 +37,7 @@ resource apim 'Microsoft.ApiManagement/service@2023-05-01-preview' = {
   }
 }
 
-resource api 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
+resource api 'Microsoft.ApiManagement/service/apis@2024-06-01-preview' = {
   parent: apim
   name: 'referral-api'
   properties: {
@@ -51,7 +51,7 @@ resource api 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
   }
 }
 
-resource postOperation 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
+resource postOperation 'Microsoft.ApiManagement/service/apis/operations@2024-06-01-preview' = {
   parent: api
   name: 'submit-referral'
   properties: {
@@ -64,7 +64,7 @@ resource postOperation 'Microsoft.ApiManagement/service/apis/operations@2023-05-
 
 // Store the Logic App callback URL as an APIM Named Value to avoid XML encoding issues
 // with SAS query parameters containing & and = characters
-resource backendUrlNamedValue 'Microsoft.ApiManagement/service/namedValues@2023-05-01-preview' = {
+resource backendUrlNamedValue 'Microsoft.ApiManagement/service/namedValues@2024-06-01-preview' = {
   parent: apim
   name: 'logic-app-callback-url'
   properties: {
@@ -77,7 +77,7 @@ resource backendUrlNamedValue 'Microsoft.ApiManagement/service/namedValues@2023-
 // JWT validation policy fragment — injected when tenantId is provided
 var jwtPolicyFragment = !empty(tenantId) ? '<validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized"><openid-config url="${environment().authentication.loginEndpoint}${tenantId}/v2.0/.well-known/openid-configuration" /></validate-jwt>' : ''
 
-resource operationPolicy 'Microsoft.ApiManagement/service/apis/operations/policies@2023-05-01-preview' = {
+resource operationPolicy 'Microsoft.ApiManagement/service/apis/operations/policies@2024-06-01-preview' = {
   parent: postOperation
   name: 'policy'
   dependsOn: [backendUrlNamedValue]
@@ -87,7 +87,7 @@ resource operationPolicy 'Microsoft.ApiManagement/service/apis/operations/polici
   }
 }
 
-resource subscription 'Microsoft.ApiManagement/service/subscriptions@2023-05-01-preview' = {
+resource subscription 'Microsoft.ApiManagement/service/subscriptions@2024-06-01-preview' = {
   parent: apim
   name: 'referral-subscription'
   properties: {
