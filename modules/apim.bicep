@@ -21,6 +21,9 @@ param publisherName string
 @description('Azure AD tenant ID for JWT validation (leave empty to skip OAuth)')
 param tenantId string = ''
 
+@description('Subnet resource ID for APIM VNet integration')
+param subnetId string
+
 var apimName = '${baseName}-apim'
 
 resource apim 'Microsoft.ApiManagement/service@2024-06-01-preview' = {
@@ -34,6 +37,10 @@ resource apim 'Microsoft.ApiManagement/service@2024-06-01-preview' = {
   properties: {
     publisherEmail: publisherEmail
     publisherName: publisherName
+    virtualNetworkType: 'External'
+    virtualNetworkConfiguration: {
+      subnetResourceId: subnetId
+    }
   }
 }
 

@@ -22,6 +22,12 @@ param serviceBusNamespaceId string
 @description('Key Vault resource ID')
 param keyVaultId string
 
+@description('Grafana resource ID')
+param grafanaId string
+
+@description('Logic App Standard resource ID')
+param logicAppId string
+
 // ──────────────────────────────────────────────
 // Private DNS Zones
 // ──────────────────────────────────────────────
@@ -33,6 +39,18 @@ resource sbPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 
 resource kvPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'privatelink.vaultcore.azure.net'
+  location: 'global'
+  tags: tags
+}
+
+resource grafanaPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'privatelink.grafana.azure.com'
+  location: 'global'
+  tags: tags
+}
+
+resource webPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'privatelink.azurewebsites.net'
   location: 'global'
   tags: tags
 }
@@ -52,6 +70,30 @@ resource sbDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@20
 resource kvDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   parent: kvPrivateDnsZone
   name: '${baseName}-kv-dns-link'
+  location: 'global'
+  properties: {
+    virtualNetwork: {
+      id: vnetId
+    }
+    registrationEnabled: false
+  }
+}
+
+resource grafanaDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: grafanaPrivateDnsZone
+  name: '${baseName}-grafana-dns-link'
+  location: 'global'
+  properties: {
+    virtualNetwork: {
+      id: vnetId
+    }
+    registrationEnabled: false
+  }
+}
+
+resource webDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: webPrivateDnsZone
+  name: '${baseName}-web-dns-link'
   location: 'global'
   properties: {
     virtualNetwork: {
@@ -141,8 +183,94 @@ resource kvPrivateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDn
   }
 }
 
+// ──────────────────────────────────────────────
+// Grafana Private Endpoint
+// ──────────────────────────────────────────────
+resource grafanaPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+  name: '${baseName}-pe-grafana'
+  location: location
+  tags: tags
+  properties: {
+    subnet: {
+      id: privateEndpointSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: '${baseName}-pe-grafana-conn'
+        properties: {
+          privateLinkServiceId: grafanaId
+          groupIds: [
+            'grafana'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource grafanaPrivateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+  parent: grafanaPrivateEndpoint
+  name: 'grafana-dns-zone-group'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'grafana-config'
+        properties: {
+          privateDnsZoneId: grafanaPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
+// ──────────────────────────────────────────────
+// Logic App Private Endpoint
+// ──────────────────────────────────────────────
+resource logicAppPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+  name: '${baseName}-pe-logicapp'
+  location: location
+  tags: tags
+  properties: {
+    subnet: {
+      id: privateEndpointSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: '${baseName}-pe-logicapp-conn'
+        properties: {
+          privateLinkServiceId: logicAppId
+          groupIds: [
+            'sites'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource logicAppPrivateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+  parent: logicAppPrivateEndpoint
+  name: 'logicapp-dns-zone-group'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'webapp-config'
+        properties: {
+          privateDnsZoneId: webPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
 @description('Service Bus private endpoint name')
 output serviceBusPrivateEndpointName string = sbPrivateEndpoint.name
 
 @description('Key Vault private endpoint name')
 output keyVaultPrivateEndpointName string = kvPrivateEndpoint.name
+
+@description('Grafana private endpoint name')
+output grafanaPrivateEndpointName string = grafanaPrivateEndpoint.name
+
+@description('Logic App private endpoint name')
+output logicAppPrivateEndpointName string = logicAppPrivateEndpoint.name

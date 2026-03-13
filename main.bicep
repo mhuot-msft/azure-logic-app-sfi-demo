@@ -29,9 +29,6 @@ param vnetAddressPrefix string = '10.0.0.0/16'
 @description('Azure AD tenant ID for APIM JWT validation (leave empty to skip)')
 param apimTenantId string = ''
 
-@description('Connector outbound IP ranges for Service Bus firewall (AzureConnectors service tag for your region)')
-param connectorOutboundIpRanges array = []
-
 @description('Deploy Azure Bastion + jumpbox VM for demo access to private resources')
 param deployBastion bool = true
 
@@ -81,7 +78,6 @@ module serviceBus 'modules/service-bus.bicep' = {
     location: location
     baseName: baseName
     tags: tags
-    connectorOutboundIpRanges: connectorOutboundIpRanges
   }
 }
 
@@ -112,46 +108,23 @@ module privateEndpoints 'modules/private-endpoints.bicep' = {
     vnetId: vnet.outputs.vnetId
     serviceBusNamespaceId: serviceBus.outputs.namespaceId
     keyVaultId: keyVault.outputs.vaultId
+    grafanaId: grafana.outputs.resourceId
+    logicAppId: logicAppStandard.outputs.resourceId
   }
 }
 
 // ──────────────────────────────────────────────
-// 4. API Connections (depends on Service Bus)
+// 4. Logic App Standard (replaces Consumption intake + router + API connections)
+//    VNet-integrated — connects to Service Bus via private endpoint
 // ──────────────────────────────────────────────
-module apiConnections 'modules/api-connections.bicep' = {
-  name: 'deploy-api-connections'
+module logicAppStandard 'modules/logic-app-standard.bicep' = {
+  name: 'deploy-logic-app-standard'
   params: {
     location: location
+    baseName: baseName
     tags: tags
+    vnetIntegrationSubnetId: vnet.outputs.logicAppsSubnetId
     serviceBusNamespaceFqdn: '${serviceBus.outputs.namespaceName}.servicebus.windows.net'
-  }
-}
-
-// ──────────────────────────────────────────────
-// 5. Logic App: Referral Intake (depends on API Connection)
-// ──────────────────────────────────────────────
-module intakeLogicApp 'modules/logic-app-intake.bicep' = {
-  name: 'deploy-logic-app-intake'
-  params: {
-    location: location
-    baseName: baseName
-    tags: tags
-    serviceBusConnectionId: apiConnections.outputs.connectionId
-    serviceBusConnectionName: apiConnections.outputs.connectionName
-  }
-}
-
-// ──────────────────────────────────────────────
-// 6. Logic App: Referral Router (depends on API Connection)
-// ──────────────────────────────────────────────
-module routerLogicApp 'modules/logic-app-router.bicep' = {
-  name: 'deploy-logic-app-router'
-  params: {
-    location: location
-    baseName: baseName
-    tags: tags
-    serviceBusConnectionId: apiConnections.outputs.connectionId
-    serviceBusConnectionName: apiConnections.outputs.connectionName
   }
 }
 
@@ -163,8 +136,8 @@ module roleAssignments 'modules/role-assignments.bicep' = {
   params: {
     serviceBusNamespaceName: serviceBus.outputs.namespaceName
     keyVaultName: keyVault.outputs.vaultName
-    intakePrincipalId: intakeLogicApp.outputs.principalId
-    routerPrincipalId: routerLogicApp.outputs.principalId
+    intakePrincipalId: logicAppStandard.outputs.principalId
+    routerPrincipalId: logicAppStandard.outputs.principalId
   }
 }
 
@@ -173,15 +146,16 @@ module roleAssignments 'modules/role-assignments.bicep' = {
 // ──────────────────────────────────────────────
 module apim 'modules/apim.bicep' = {
   name: 'deploy-apim'
-  dependsOn: [intakeLogicApp]
+  dependsOn: [privateEndpoints]
   params: {
     location: location
     baseName: baseName
     tags: tags
-    intakeCallbackUrl: listCallbackUrl('${resourceId('Microsoft.Logic/workflows', '${baseName}-intake')}/triggers/manual', '2019-05-01').value
+    intakeCallbackUrl: 'https://${logicAppStandard.outputs.defaultHostname}/api/intake/triggers/manual/invoke?api-version=2022-05-01'
     publisherEmail: publisherEmail
     publisherName: publisherName
     tenantId: apimTenantId
+    subnetId: vnet.outputs.apimSubnetId
   }
 }
 
@@ -206,8 +180,8 @@ module diagnostics 'modules/diagnostics.bicep' = {
   name: 'deploy-diagnostics'
   params: {
     workspaceId: logAnalytics.outputs.workspaceId
-    intakeLogicAppName: intakeLogicApp.outputs.name
-    routerLogicAppName: routerLogicApp.outputs.name
+    intakeLogicAppName: logicAppStandard.outputs.name
+    routerLogicAppName: logicAppStandard.outputs.name
     serviceBusNamespaceName: serviceBus.outputs.namespaceName
     keyVaultName: keyVault.outputs.vaultName
     apimName: '${baseName}-apim'
@@ -224,8 +198,8 @@ module alerts 'modules/alerts.bicep' = {
     workspaceId: logAnalytics.outputs.workspaceId
     serviceBusNamespaceName: serviceBus.outputs.namespaceName
     keyVaultName: keyVault.outputs.vaultName
-    intakeLogicAppName: intakeLogicApp.outputs.name
-    routerLogicAppName: routerLogicApp.outputs.name
+    intakeLogicAppName: logicAppStandard.outputs.name
+    routerLogicAppName: logicAppStandard.outputs.name
     alertEmailAddress: alertEmailAddress
   }
 }
@@ -258,10 +232,10 @@ output referralEndpoint string = apim.outputs.referralEndpoint
 output resourceGroupName string = resourceGroup().name
 
 @description('Intake Logic App name')
-output intakeLogicAppName string = intakeLogicApp.outputs.name
+output logicAppStandardName string = logicAppStandard.outputs.name
 
-@description('Router Logic App name')
-output routerLogicAppName string = routerLogicApp.outputs.name
+@description('Logic App Standard hostname')
+output logicAppHostname string = logicAppStandard.outputs.defaultHostname
 
 @description('Grafana dashboard URL')
 output grafanaEndpoint string = grafana.outputs.endpoint

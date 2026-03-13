@@ -169,14 +169,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
           networkSecurityGroup: {
             id: nsgApim.id
           }
-          delegations: [
-            {
-              name: 'apim-delegation'
-              properties: {
-                serviceName: 'Microsoft.Web/serverFarms'
-              }
-            }
-          ]
         }
       }
       {
@@ -193,6 +185,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
         name: 'snet-logic-apps'
         properties: {
           addressPrefix: logicAppsSubnetPrefix
+          networkSecurityGroup: {
+            id: nsgPrivateEndpoints.id
+          }
           delegations: [
             {
               name: 'logic-app-delegation'
