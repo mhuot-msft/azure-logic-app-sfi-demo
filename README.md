@@ -13,29 +13,29 @@ flowchart LR
     end
 
     subgraph api["API Layer"]
-        B["API Management\nStandardV2 Tier\nRate Limited: 10/min\nJWT Validation"]
+        B["API Management (StandardV2)"]
     end
 
     subgraph network["Network Security (SFI)"]
-        V["VNet + NSGs\nDeny-by-default"]
-        PE["Private Endpoints\n+ Private DNS"]
+        V["VNet + NSGs"]
+        PE["Private Endpoints + DNS"]
     end
 
     subgraph processing["Processing"]
-        C["Logic App: Intake\nValidate & Enrich\nAdd correlationId"]
-        F["Logic App: Router\nPriority Check"]
+        C["Logic App: Intake"]
+        F["Logic App: Router"]
     end
 
     subgraph messaging["Service Bus Queues (Premium)"]
         D[incoming-referrals]
-        G["urgent-referrals\npriority = urgent / high"]
-        H["standard-referrals\npriority = normal / low"]
+        G["urgent-referrals"]
+        H["standard-referrals"]
     end
 
     subgraph security["Cross-Cutting Services"]
-        I["Key Vault\nPurge Protected\nPrivate Endpoint"]
-        J["Log Analytics\n+ Alerts & Action Groups"]
-        K["Managed Identity\nRBAC — No Passwords"]
+        I["Key Vault"]
+        J["Log Analytics + Alerts"]
+        K["Managed Identity + RBAC"]
     end
 
     A -->|HTTPS + API Key| B
@@ -58,8 +58,8 @@ flowchart LR
     K -.->|auth| C
     K -.->|auth| F
 
-    style network fill:#e8f5e9,stroke:#2e7d32,color:#1a1a1a
-    style security fill:#f5f5f5,stroke:#595959,stroke-dasharray: 5 5,color:#1a1a1a
+    style network fill:#e8f5e9,stroke:#2e7d32,color:#1a1a2e
+    style security fill:#f5f5f5,stroke:#595959,stroke-dasharray: 5 5,color:#1a1a2e
 ```
 
 ## Prerequisites

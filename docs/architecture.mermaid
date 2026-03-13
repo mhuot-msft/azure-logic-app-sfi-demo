@@ -1,4 +1,4 @@
-%% Azure Logic Apps Healthcare Referral Routing — Architecture Diagram
+%% Azure Logic Apps Healthcare Referral Routing - Architecture Diagram
 %% Render at https://mermaid.live or in any Mermaid-compatible viewer
 
 flowchart TB
@@ -9,37 +9,37 @@ flowchart TB
 
     subgraph apimLayer["API Gateway"]
         direction TB
-        APIM["API Management<br/><i>Consumption Tier</i><br/>Rate Limit: 10 req/min<br/>Subscription Key Required"]
+        APIM["API Management"]
     end
 
-    subgraph intake["Stage 1 — Intake"]
+    subgraph intake["Stage 1 - Intake"]
         direction TB
-        LA1["Logic App: Referral Intake<br/><i>System-Assigned Managed Identity</i>"]
-        LA1_V["Validate Schema<br/>6 required fields"]
-        LA1_E["Enrich<br/>+ correlationId<br/>+ receivedAt<br/>+ status"]
+        LA1["Logic App: Intake"]
+        LA1_V["Validate Schema"]
+        LA1_E["Enrich Metadata"]
         LA1 --> LA1_V --> LA1_E
     end
 
-    subgraph bus["Azure Service Bus <i>(Standard Tier)</i>"]
+    subgraph bus["Azure Service Bus"]
         direction TB
-        Q1["incoming-referrals<br/><i>intake output</i>"]
-        Q2["urgent-referrals<br/><i>priority = urgent | high</i>"]
-        Q3["standard-referrals<br/><i>priority = normal | low</i>"]
+        Q1["incoming-referrals"]
+        Q2["urgent-referrals"]
+        Q3["standard-referrals"]
     end
 
-    subgraph router["Stage 2 — Router"]
+    subgraph router["Stage 2 - Router"]
         direction TB
-        LA2["Logic App: Referral Router<br/><i>System-Assigned Managed Identity</i>"]
+        LA2["Logic App: Router"]
         LA2_P["Parse Message"]
-        LA2_C{"Priority<br/>Check"}
+        LA2_C{"Priority Check"}
         LA2 --> LA2_P --> LA2_C
     end
 
     subgraph crosscut["Cross-Cutting Services"]
         direction LR
-        KV["Key Vault<br/><i>RBAC Authorization</i><br/>Stores SB Connection String"]
-        LAW["Log Analytics Workspace<br/><i>30-day Retention</i><br/>Diagnostics from All Resources"]
-        MI["Managed Identity + RBAC<br/><i>No Passwords Anywhere</i><br/>SB Data Sender/Receiver<br/>KV Secrets User"]
+        KV["Key Vault (RBAC)"]
+        LAW["Log Analytics"]
+        MI["Managed Identity + RBAC"]
     end
 
     PS -->|"HTTPS POST + API Key"| APIM
@@ -59,16 +59,16 @@ flowchart TB
     MI -.->|"authenticates"| LA1
     MI -.->|"authenticates"| LA2
 
-    classDef clientStyle fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1
-    classDef apimStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#bf360c
-    classDef logicStyle fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#1a237e
-    classDef busStyle fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20
-    classDef urgentStyle fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#b71c1c
-    classDef standardStyle fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20
-    classDef securityStyle fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#880e4f
-    classDef observeStyle fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c
-    classDef identityStyle fill:#efebe9,stroke:#4e342e,stroke-width:2px,color:#3e2723
-    classDef decisionStyle fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#e65100
+    classDef clientStyle fill:#4dabf7,stroke:#1864ab,stroke-width:2px,color:#1a1a2e
+    classDef apimStyle fill:#ffd43b,stroke:#e67700,stroke-width:2px,color:#1a1a2e
+    classDef logicStyle fill:#4dabf7,stroke:#1864ab,stroke-width:2px,color:#1a1a2e
+    classDef busStyle fill:#69db7c,stroke:#2b8a3e,stroke-width:2px,color:#1a1a2e
+    classDef urgentStyle fill:#ff8787,stroke:#c92a2a,stroke-width:2px,color:#1a1a2e
+    classDef standardStyle fill:#69db7c,stroke:#2b8a3e,stroke-width:2px,color:#1a1a2e
+    classDef securityStyle fill:#b197fc,stroke:#6741d9,stroke-width:2px,color:#1a1a2e
+    classDef observeStyle fill:#b197fc,stroke:#6741d9,stroke-width:2px,color:#1a1a2e
+    classDef identityStyle fill:#ced4da,stroke:#495057,stroke-width:2px,color:#1a1a2e
+    classDef decisionStyle fill:#ffd43b,stroke:#e67700,stroke-width:2px,color:#1a1a2e
 
     class PS clientStyle
     class APIM apimStyle
