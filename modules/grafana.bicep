@@ -28,7 +28,7 @@ resource grafana 'Microsoft.Dashboard/grafana@2023-09-01' = {
   }
   properties: {
     grafanaMajorVersion: '11'
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: 'Enabled'
     apiKey: 'Enabled'
     deterministicOutboundIP: 'Disabled'
     grafanaIntegrations: {
