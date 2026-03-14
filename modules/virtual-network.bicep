@@ -228,3 +228,9 @@ output logicAppsSubnetId string = vnet.properties.subnets[2].id
 
 @description('Jumpbox subnet resource ID')
 output jumpboxSubnetId string = vnet.properties.subnets[3].id
+
+@description('APIM NSG resource ID')
+output apimNsgId string = nsgApim.id
+
+@description('Private endpoints NSG resource ID')
+output peNsgId string = nsgPrivateEndpoints.id

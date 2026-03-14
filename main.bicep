@@ -203,7 +203,21 @@ module alerts 'modules/alerts.bicep' = {
 }
 
 // ──────────────────────────────────────────────
-// 12. Azure Bastion + Jumpbox VM (demo access to private resources)
+// 12. NSG Flow Logs + Traffic Analytics (SFI — network visibility)
+// ──────────────────────────────────────────────
+module flowLogs 'modules/flow-logs.bicep' = {
+  name: 'deploy-flow-logs'
+  params: {
+    location: location
+    baseName: baseName
+    tags: tags
+    vnetId: vnet.outputs.vnetId
+    workspaceId: logAnalytics.outputs.workspaceId
+  }
+}
+
+// ──────────────────────────────────────────────
+// 13. Azure Bastion + Jumpbox VM (demo access to private resources)
 // ──────────────────────────────────────────────
 module bastion 'modules/bastion.bicep' = if (deployBastion) {
   name: 'deploy-bastion'
