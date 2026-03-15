@@ -1,8 +1,20 @@
+# SPDX-License-Identifier: MIT
+#
+# Flow Logs & Network Security — CLI Diagnostics
+# ================================================
+# Sample az CLI commands and their output for reproducing network
+# diagnostics on the healthcare-referral Logic App demo environment.
+# Replace placeholder values (<resource-group>, <flowlog-name>, etc.)
+# with your own resource names before running.
+
 ========================================================================
  Flow Logs & Network Security — CLI Diagnostics
  Generated: 2026-03-14 23:11:35 UTC
  Resource Group: rg-healthcare-referral-sfi-demo
 ========================================================================
+
+# Command:
+#   az network watcher flow-log show -l eastus2 -n "<flowlog-name>" -o table
 
 === VNet Flow Log Configuration ===
 Name:              hlth-dev-l2mpejlchzvp6-flowlog-vnet
@@ -14,6 +26,11 @@ Traffic Analytics: Enabled (10-minute interval)
 Log Analytics:     hlth-dev-l2mpejlchzvp6-law
 Format:            JSON v2
 
+# Command:
+#   az monitor log-analytics query -w "<workspace-guid>" \
+#     --analytics-query "NTATopologyDetails | project TimeGenerated, Name, AzureResourceType, Region, AddressPrefixes, Nsg | order by AzureResourceType | take 20" \
+#     --timespan PT24H -o table
+
 === Network Topology (from Traffic Analytics / Log Analytics) ===
 Resource Type            Name                                                    NSG Association
 ------------------------ ------------------------------------------------------- --------------------------------
@@ -23,6 +40,11 @@ VirtualSubnetwork        hlth-dev-l2mpejlchzvp6-vnet/snet-private-endpoints     
 VirtualSubnetwork        hlth-dev-l2mpejlchzvp6-vnet/snet-logic-apps             nsg-pe
 VirtualSubnetwork        hlth-dev-l2mpejlchzvp6-vnet/snet-jumpbox                nsg-pe
 VirtualMachine           hlth-dev-l2mpejlchzvp6-jbox                             (deallocated)
+
+# Command:
+#   az network nsg rule list --nsg-name "<nsg-name>" -g "<resource-group>" \
+#     --query "[].{Name:name, Priority:priority, Direction:direction, Access:access, Protocol:protocol, SrcAddr:sourceAddressPrefix, DstPort:destinationPortRange}" \
+#     -o table
 
 === NSG Rules — APIM Subnet (hlth-dev-l2mpejlchzvp6-nsg-apim) ===
 Name                    Priority  Direction  Access  Protocol  Source             Dest Port
@@ -34,11 +56,21 @@ Allow-Storage-Outbound   100       Outbound   Allow   Tcp       VirtualNetwork  
 Allow-SQL-Outbound       110       Outbound   Allow   Tcp       VirtualNetwork     1433
 Allow-AzureAD-Outbound   120       Outbound   Allow   Tcp       VirtualNetwork     443
 
+# Command (same as above, with PE subnet NSG name):
+#   az network nsg rule list --nsg-name "<nsg-name>" -g "<resource-group>" \
+#     --query "[].{Name:name, Priority:priority, Direction:direction, Access:access, Protocol:protocol, SrcAddr:sourceAddressPrefix, DstPort:destinationPortRange}" \
+#     -o table
+
 === NSG Rules — PE Subnet (hlth-dev-l2mpejlchzvp6-nsg-pe) ===
 Name                Priority  Direction  Access  Protocol  Source          Dest Port
 ------------------- --------- ---------- ------- --------- --------------- ---------
 Allow-VNet-Inbound  100       Inbound    Allow   *         VirtualNetwork  *
 Deny-All-Inbound    4096      Inbound    Deny    *         *               *
+
+# Command:
+#   az network private-endpoint list -g "<resource-group>" \
+#     --query "[].{Name:name, GroupId:privateLinkServiceConnections[0].groupIds[0]}" \
+#     -o table
 
 === Private Endpoints ===
 Name                                Service    Target
@@ -46,6 +78,12 @@ Name                                Service    Target
 hlth-dev-l2mpejlchzvp6-pe-grafana   grafana    Managed Grafana
 hlth-dev-l2mpejlchzvp6-pe-kv        vault      Key Vault
 hlth-dev-l2mpejlchzvp6-pe-sb        namespace  Service Bus Namespace
+
+# Commands:
+#   az network private-dns zone list -g "<resource-group>" -o table
+#   az network private-dns record-set list -z "<zone-name>" -g "<resource-group>" \
+#     --query "[?type!='Microsoft.Network/privateDnsZones/SOA'].{Name:name, Type:type, FQDN:fqdn}" \
+#     -o table
 
 === Private DNS Zones ===
 Zone                                  Records  A-Record FQDNs

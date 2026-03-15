@@ -43,10 +43,29 @@ resource flowLogStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
     allowBlobPublicAccess: false
+    allowSharedKeyAccess: false
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
     }
+  }
+}
+
+// User-assigned managed identity for flow log writes to storage (SFI: no shared key access)
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${baseName}-flowlog-identity'
+  location: location
+  tags: tags
+}
+
+// Grant the managed identity Storage Blob Data Contributor on the flow log storage account
+resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(flowLogStorage.id, managedIdentity.id, 'Storage Blob Data Contributor')
+  scope: flowLogStorage
+  properties: {
+    principalId: managedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
   }
 }
 
@@ -63,6 +82,7 @@ module flowLogResources 'flow-logs-nw.bicep' = {
     workspaceId: workspaceId
     retentionDays: retentionDays
     trafficAnalyticsInterval: trafficAnalyticsInterval
+    identityId: managedIdentity.id
   }
 }
 
@@ -71,3 +91,6 @@ output storageAccountName string = flowLogStorage.name
 
 @description('VNet flow log name')
 output flowLogName string = flowLogResources.outputs.flowLogName
+
+@description('Flow log managed identity resource ID')
+output managedIdentityId string = managedIdentity.id

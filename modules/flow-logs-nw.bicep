@@ -27,6 +27,9 @@ param retentionDays int
 @description('Traffic Analytics interval in minutes')
 param trafficAnalyticsInterval int
 
+@description('User-assigned managed identity resource ID for flow log storage access')
+param identityId string
+
 resource networkWatcher 'Microsoft.Network/networkWatchers@2023-11-01' existing = {
   name: 'NetworkWatcher_${location}'
 }
@@ -36,6 +39,12 @@ resource flowLog 'Microsoft.Network/networkWatchers/flowLogs@2023-11-01' = {
   location: location
   tags: tags
   parent: networkWatcher
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${identityId}': {}
+    }
+  }
   properties: {
     targetResourceId: vnetId
     storageId: storageId
